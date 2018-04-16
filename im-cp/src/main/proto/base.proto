@@ -1,0 +1,17 @@
+syntax = "proto3";
+package uuc;
+
+option java_package = "tech.huit.socket.cp";
+
+
+option java_outer_classname = "Base";
+
+//消息分类：1、*Request 由终端发往服务器（服务器使用相同协议号的ResponseStatus进行回执，如请求的数据返回结构复杂定义对应的*Response协议） 2、*Notify 服务器状态变更导致的数据推送，由服务器发往终端
+
+//封装服务器响应消息，请求和响应使用同一个协议号
+message ResponseStatus {
+    bool status = 1; //状态
+    string data = 2; //业务数据
+    string errorCode = 3; //错误码
+    string errorMsg = 4; //错误信息
+}

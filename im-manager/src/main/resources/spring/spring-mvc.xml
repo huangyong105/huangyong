@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 静态资源位置 -->
+    <!--<resources mapping="/static/**" location="/static/" /> -->
+
+    <context:component-scan base-package="tech.huit.uuc.web.api">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <beans:property name="prefix" value="/view/"/>
+        <beans:property name="suffix" value=".jsp"/>
+    </beans:bean>
+
+    <!-- json转化 -->
+    <annotation-driven>
+        <message-converters register-defaults="true">
+            <beans:bean id="fastJsonHttpMessageConverter" class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <beans:property name="supportedMediaTypes">
+                    <beans:list>
+                        <beans:value>application/json;charset=utf-8</beans:value>
+                    </beans:list>
+                </beans:property>
+<!--                <beans:property name="features">
+                    <beans:array>
+                        <beans:value>WriteMapNullValue</beans:value>
+                        <beans:value>WriteNullStringAsEmpty</beans:value>
+                    </beans:array>
+                </beans:property>-->
+            </beans:bean>
+        </message-converters>
+    </annotation-driven>
+
+    <beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <beans:property name="defaultEncoding" value="UTF-8"/>
+        <beans:property name="maxUploadSize" value="1048576000000"/>
+        <beans:property name="maxInMemorySize" value="40960"/>
+    </beans:bean>
+
+</beans:beans>

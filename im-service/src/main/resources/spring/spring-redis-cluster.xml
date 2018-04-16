@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:cache="http://www.springframework.org/schema/cache" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+      http://www.springframework.org/schema/aop
+      http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+      http://www.springframework.org/schema/cache
+      http://www.springframework.org/schema/cache/spring-cache-4.1.xsd
+      http://www.springframework.org/schema/util
+      http://www.springframework.org/schema/util/spring-util-4.1.xsd
+      ">
+    <bean id="jedisCluster" class="redis.clients.jedis.JedisCluster" destroy-method="close" autowire="byName">
+        <constructor-arg type="redis.clients.jedis.HostAndPort">
+            <bean class="redis.clients.jedis.HostAndPort">
+                <constructor-arg type="java.lang.String" value="${redis.cluster.host}"></constructor-arg>
+                <constructor-arg type="int" value="${redis.cluster.port}"></constructor-arg>
+            </bean>
+        </constructor-arg>
+        <constructor-arg type="int">
+            <value>2000</value>
+        </constructor-arg>
+        <constructor-arg type="int">
+            <value>2000</value>
+        </constructor-arg>
+        <constructor-arg type="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+            <bean class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+                <property name="maxTotal" value="500"/>
+                <property name="maxIdle" value="10"/>
+                <property name="minIdle" value="1"/>
+            </bean>
+        </constructor-arg>
+    </bean>
+</beans>
+

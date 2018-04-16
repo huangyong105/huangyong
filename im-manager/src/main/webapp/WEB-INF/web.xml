@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:spring/spring-context.xml</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <listener>
+        <listener-class>tech.huit.nio.web.ContextLoaderListener</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath*:/spring/spring-mvc.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <display-name>nio-server</display-name>
+        <servlet-name>nio-server</servlet-name>
+        <servlet-class>tech.huit.socket.web.NioServerSpringStarupServlet</servlet-class>
+        <init-param>
+            <param-name>port</param-name>
+            <param-value>6413</param-value>
+        </init-param>
+        <init-param>
+            <param-name>classScanPath</param-name>
+            <param-value>tech.huit</param-value>
+        </init-param>
+        <load-on-startup>0</load-on-startup>
+    </servlet>
+</web-app>

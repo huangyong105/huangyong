@@ -1,0 +1,216 @@
+syntax = "proto3";
+package uuc;
+import "base.proto";
+
+option java_package = "tech.huit.socket.cp.message";
+//option java_package = "com.witaction.im.model.bean.proto";//android
+
+//聊天相关协议号
+//public static final short Msg_LoginRequest = 10000;//聊天服务登录
+//public static final short Msg_StatusNotify = 10001;//同一账号不同类型终端上下线通知
+//public static final short Msg_KickNotify = 10009;//同一账号相同类型设备登录，强制老设备下线通知
+//public static final short Msg_SendRequest = 10002;//聊天信息发送请求
+//public static final short Msg_Notify = 10003;//服务器转发的聊天消息
+//public static final short Msg_FontSetRequest = 10004;//用户聊天消息字体设置请求
+//public static final short Msg_FontNotify = 10005;//用户聊天消息字体设置转发
+//public static final short Msg_OfflineRequest = 10006;//拉取离线消息请求
+//public static final short Msg_GroupJoinRequest = 10007;//加入聊天室
+//public static final short Msg_FontSubscribeRequest = 10008;//用户聊天消息字体设置状态订购
+//public static final short Msg_LastMsgRequest = 10010;//拉取最近N条收发消息
+//public static final short Msg_GroupExitRequest = 10011;//退出聊天室
+//public static final short Msg_GroupInviteKickRequest = 10012;//邀请或踢出群请求
+//public static final short Msg_GroupInviteKickNotify = 10013;//邀请或踢出群通知
+//public static final short Msg_CancelRequest = 10014;//消息撤销请求
+//public static final short Msg_CancelNotify = 10015;//消息撤销通知
+//public static final short Msg_TimeRequest = 10016;//消息服务器当前时间查询
+
+
+//关键字段说明
+//消息列号：serialNumber 取值范围：0到16384之间循环。每个用户收到的1对1消息全局唯一，如果发现序号和上一个不连续那到存在漏消息的情况，需要重新拉取一次拉取离线消息
+//注意：serialNumber 是服务器内存中的消息编号，服务器正常情况下是0到16384之间循环，但是服务器异常终止会导致重置为0
+//比如：最后收到的一条消息，{time=2018-01-11 00:00:01 ,offset =5} ，新消息{time=2018-01-11 00:00:02 ,offset =1}
+//通过时间比上一条消息新，但offset小于上一条消息值小，这时就直接用最新offset重置客户端的offset
+option java_outer_classname = "Msg";
+//option java_outer_classname = "Message";//android
+
+//登录IM的设备类型，同一类型的设备只允许登录一台，新的设备登录后老的设备会被顶下线
+enum DeviceType {
+    MOBILE = 0; //手机
+    PAD = 1; //平板电脑
+    PC = 2; //PC
+}
+
+/**
+ * 聊天服务登录,进行聊天服务之前必须先进行聊天服务登录，收到ResponseStatus返回为成功时才能进行其他相关操作。
+ * 新的登陆会导致同一类型终端类型其他登录设备收到 Msg_KickNotify 下线提示协议，下线后不会在接收到消息推送
+ * 可能收到的错误提示：
+ * AUTH_LOGIN_TOKEN("0004", "登录Token错误")，需要重新进行登录，登录详情见：auth/login接口
+ * MSG_LOGIN_PARAM_ERROR("0100", "参数错误,token和deviceType不能为空")
+ */
+message LoginRequest {
+    string token = 1; //用户认证信息，从系统登录接口获取，详情见：auth/login
+    DeviceType deviceType = 2; //设备类型
+}
+
+//同一用户不同终端类型之间上下线通知
+message StatusNotify {
+    bool isOnline = 1; //是否在线，true为上线，false为下线
+    DeviceType deviceType = 2; //设备类型
+}
+
+//同一账号相同类型设备登录，强制老设备下线通知
+message KickNotify {
+    string msg = 1; //提示消息
+}
+
+//聊天消息类型
+enum MessageType {
+    P2P = 0; //1对1聊天消息
+    GROUP = 1; //群聊消息
+}
+
+//聊天信息发送请求，聊天信息发送响应（ResponseStatus data字段为msgId&unixTimestamp）
+message SendRequest {
+    int32 msgId = 1; //消息id，客户端自己维护一个0到16384递增的id，服务器根据id进行回执,如果id=-1则不进行回执
+    int32 receiverNum = 2; //1对1消息接收者号码，群消息时这个字段不赋值
+    string groupNum = 3; //群组消息id，大于0时为群消息，等于0时为p2p消息，1对1消息时这个字段不赋值
+    string fileOriginalName = 4; //原始文件名，终端根据原始文件名后缀自行做相应处理
+    string fileDownloadUrl = 5; //文件下载url，走http协议，详情见：/msg/fileUpload ，根据下载地址区分消息类型，如果是普通文本消息，在通过类型区分
+    string msg = 6; //聊天信息数据
+    int32 fileSize = 7; //文件大小
+    int32 type = 8; //1-普通文本消息 2-推送消息 ，根据下载地址区分消息类型，如果是普通文本消息，在通过类型区分
+}
+
+//推送的聊天信息，由服务器发给接收方
+message Notify {
+    int32 senderUid = 1; //发送者uid，发送时无需设值
+    string groupNum = 2; //群组id，大于0时为群消息，等于0时为p2p消息
+    int32 time = 3; //消息时间精确到秒，发送时不用指定时间，以服务器收到的时间为准
+    int32 serialNumber = 4; //消息序列号，用于离线消息和消息缺失检测，取值范围0到16384之内循环
+    string fileOriginalName = 5; //原始文件名，终端根据原始文件名后缀自行做相应处理
+    string fileDownloadUrl = 6; //文件下载url，走http协议，详情见：/msg/fileUpload
+    string msg = 7; //聊天信息数据
+    int32 fileSize = 8; //文件大小
+    int32 receiverNum = 9; //1对1消息接收者号码，群消息时这个字段不赋值
+    int32 status = 10; //状态：0、正常消息，1、被撤销
+    int32 type = 11; //1-普通文本消息 2-推送消息 ，根据下载地址区分消息类型，如果是普通文本消息，在通过类型区分
+}
+
+//聊天信息撤销请求，聊天信息发送响应（ResponseStatus），撤销成功的消息内容会被修改为："消息已经被撤销，更新消息时间为撤销时间，其他字段清空"
+message CancelRequest {
+    int32 msgId = 1; //消息id
+    int32 receiverNum = 2; //1对1消息接收者号码，群消息时这个字段不赋值
+    string groupNum = 3; //群组消息id，大于0时为群消息，等于0时为p2p消息，1对1消息时这个字段不赋值
+}
+
+//聊天信息撤销通知，由服务器发给消息接收者
+message CancelNotify {
+    int32 msgId = 1; //消息id
+    int32 receiverNum = 2; //1对1消息接收者号码，群消息时这个字段不赋值
+    string groupNum = 3; //群组消息id，大于0时为群消息，等于0时为p2p消息，1对1消息时这个字段不赋值
+}
+
+//用户聊天消息字体设置请求,返回ResponseStatus
+message FontSetRequest {
+    string font = 1; //字体
+    int32 fontSize = 2; //字体大小
+    bool fontBold = 3; //是否粗体
+    bool fontItalic = 4; //是否斜体
+    bool fontUnderline = 5; //是否下划线
+    int32 fontColor = 6; //字体原色
+}
+
+//用户聊天消息字体状态订购，订购后会收到用户字体设置的更新
+message FontSubscribeRequest {
+    repeated int32 uids = 1; //要订购的用户uid列表
+}
+
+/*
+ * 用户聊天消息字体状态订购返回
+ * 错误码：
+ * MSG_USER_NOT_LOGIN("0102", "当前操作用户没有正确登录，请检查登录状态")
+ */
+message FontSubscribeResponse {
+    ResponseStatus responseStatus = 1; //请求处理结果
+    repeated FontNotify messageFonts = 2; //返回当前订购用户的字体，如果未进设置不返回
+}
+
+//用户字体设置通知
+message FontNotify {
+    int32 uid = 1; //用户uid
+    string font = 2; //字体
+    int32 fontSize = 3; //字体大小
+    bool fontBold = 4; //是否粗体
+    bool fontItalic = 5; //是否斜体
+    bool fontUnderline = 6; //是否下划线
+    int32 fontColor = 7; //字体原色
+}
+
+//群消息编号
+message GroupOffset {
+    string groupNum = 1; //群id
+    int32 groupOffset = 2; //群消息最后收到一条的编号
+}
+
+//拉取离线消息（协议号:Msg_OfflineRequest）,返回值OfflineResponse。
+//使用场景：1客户端断网和服务器重新连接，2收到最新消息和上一条消息offset不连续）；
+//比如一个客户端上一次收到群或P2P最后一条消息offset=5,还没去拉离线时这时来了一条新消息offset=7
+//这说明客户端漏了两条消息，这个时候客户端需要用offset=5再拉取一次离线消息（新消息客户端根据offset和时间去重）
+//注意:新装app不能使用offset=0来拉取离线消息，拉取离线消息必须客户端明确知道上一次最新一条消息的offset才能使用
+message OfflineRequest {
+    int32 p2pOffset = 1; //1对1聊天最后一条收到消息的序列号
+    repeated GroupOffset groupOffsets = 2; //每一个群聊组都有自己的消息序号
+}
+
+//拉取最近n条收发消息，返回值OfflineResponse（协议号:Msg_LastMsgRequest）,发送的消息每次都会拉取
+//使用场景：1客户端第一次新安装APP（不能使用OfflineRequest）
+message LastMsgRequest {
+    int32 lastMsgSendSize = 1; //新装app时，拉取最后发送的消息条数（包含p2p和group消息）
+    int32 lastMsgRecvSize = 2; //新装app时，拉取最后接收的消息条数（p2p消息和每个group分别计算，如5，表示接收最后5条p2p消息，和每个加入的群的最后5条消息）
+    repeated string groupIds = 3;//要拉取的群id,如果不传表示拉取当前加入的所群消息
+    bool isNotPullP2P = 4;//是否不拉取P2P消息，默认为false要拉取
+}
+
+/*
+ * 拉取离线消息返回
+ * 错误码：
+ * MSG_USER_NOT_LOGIN("0102", "当前操作用户没有正确登录，请检查登录状态")
+ */
+message OfflineResponse {
+    ResponseStatus responseStatus = 1; //请求处理结果
+    repeated Notify messagsRecv = 2; //接收的聊天消息
+    repeated Notify messagsSend = 3; //发送的聊天消息
+}
+
+
+//加入聊天室，返回ResponseStatus(data字段为groupNum），聊天室id使用会议室列表中的id
+message GroupJoinRequest {
+    repeated string groupNum = 1; //聊天室号码
+}
+
+//退出聊天室，返回ResponseStatus(data字段为groupNum），聊天室id使用会议室列表中的id
+message GroupExitRequest {
+    repeated string groupNum = 1; //聊天室号码
+}
+
+//邀请或踢出群请求(只对已经执行Msg_LoginRequest登录IM的用户起作用)，
+message GroupInviteKickRequest {
+    string uucToken = 1; //uucToken
+    repeated string groupNum = 2; //聊天室号码列表
+    repeated int32 uids = 3; //邀请或踢出的uid列表
+    bool isInvite = 4; //是否邀请，如果不是邀请就是踢出群
+    string msg = 5; //邀请信息
+}
+
+//邀请或踢出群通知，通过GroupInviteKickRequest或http接口msg/GroupInviteKick触发
+message GroupInviteKickNotify {
+    int32 uid = 1; //邀请或踢出的uid
+    repeated string groupNum = 2; //聊天室号码列表
+    bool isInvite = 3; //是否邀请，如果不是邀请就是踢出群。邀请后需要客户端执行GroupJoinRequest才能真正加入聊天室
+    string msg = 4; //邀请信息
+}
+
+//查询服务器时间，通过空包Empty(Msg_TimeRequest)返回TimeResponse(time字段为unixTimestamp,协议号与Msg_TimeRequest一致)
+message TimeResponse {
+    int32 time = 1; //文件大小
+}

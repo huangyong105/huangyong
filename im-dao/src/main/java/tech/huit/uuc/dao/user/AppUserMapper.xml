@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tech.huit.uuc.dao.user.AppUserMapper">
+	<sql id="Base_Column_List" >
+	username,password,nickname,phone,token,create_time
+	</sql>
+	<insert id="insert" parameterType="tech.huit.uuc.entity.user.AppUser" useGeneratedKeys="true" keyProperty="id">
+		insert into t_app_user
+		(username,password,nickname,phone,token,create_time) 
+		values 
+		(#{username},#{password},#{nickname},#{phone},#{token},#{createTime}) 
+	</insert>
+	<delete id="deleteById" parameterType="int">
+		delete from t_app_user where id=#{id}
+	</delete>
+	<select id="selectById" resultType="tech.huit.uuc.entity.user.AppUser">
+		select * from t_app_user where id=#{id}
+	</select>
+	<select id="selectByPhone" resultType="tech.huit.uuc.entity.user.AppUser">
+		select * from t_app_user where phone=#{phone}
+	</select>
+	<select id="selectByUsername" resultType="tech.huit.uuc.entity.user.AppUser">
+		select * from t_app_user where username=#{username}
+	</select>
+	<select id="selectByUsernameAndPassword" resultType="tech.huit.uuc.entity.user.AppUser">
+		select * from t_app_user where username=#{username} and password=#{password}
+	</select>
+	<delete id="deleteByIds" parameterType="int">
+		delete from t_app_user
+		<where>
+		<choose>
+			<when test="null != ids">
+				<foreach collection="ids" item="id" separator="," open="id in (" close=")">
+				#{id}
+				</foreach>
+			</when>
+			<otherwise>
+			0=1
+			</otherwise>
+		</choose>
+		</where>
+	</delete>
+	<update id="update" parameterType="tech.huit.uuc.entity.user.AppUser">
+		update t_app_user
+		<set>
+			<if test="username != null">
+				username = #{username},
+			</if>
+			<if test="password != null">
+				password = #{password},
+			</if>
+			<if test="nickname != null">
+				nickname = #{nickname},
+			</if>
+			<if test="phone != null">
+				phone = #{phone},
+			</if>
+			<if test="token != null">
+				token = #{token},
+			</if>
+			<if test="createTime != null">
+				create_time = #{createTime}
+			</if>
+		</set>
+		where id=#{id}
+	</update>
+	<select id="listPaged" resultType="tech.huit.uuc.entity.user.AppUser">
+		select * from t_app_user
+		<if test="tableParam.length > -1">
+		limit #{tableParam.start},#{tableParam.length}
+		</if>
+	</select>
+	<select id="listAll" resultType="tech.huit.uuc.entity.user.AppUser">
+		select * from t_app_user
+	</select>
+	<select id="count" resultType="int">
+		select count(*) from t_app_user
+	</select>
+</mapper>

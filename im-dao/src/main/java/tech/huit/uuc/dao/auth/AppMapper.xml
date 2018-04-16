@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tech.huit.uuc.dao.auth.AppMapper">
+	<sql id="Base_Column_List" >
+	name,authorize_sip_count,authorize_call_count,expiry_date,rsa_pub_key,rsa_private_key,aes_key,imCallbackUrl
+	</sql>
+	<insert id="insert" parameterType="tech.huit.uuc.entity.auth.App" useGeneratedKeys="true" keyProperty="id">
+		insert into t_app
+		(name,authorize_sip_count,authorize_call_count,expiry_date,rsa_pub_key,rsa_private_key,aes_key,imCallbackUrl)
+		values 
+		(#{name},#{authorizeSipCount},#{authorizeCallCount},#{expiryDate},#{rsaPubKey},#{rsaPrivateKey},#{aesKey},#{imCallbackUrl})
+	</insert>
+	<delete id="deleteById" parameterType="int">
+		delete from t_app where id=#{id}
+	</delete>
+	<select id="selectById" resultType="tech.huit.uuc.entity.auth.App">
+		select * from t_app where id=#{id}
+	</select>
+	<select id="selectByName" resultType="tech.huit.uuc.entity.auth.App">
+		select * from t_app where name=#{name}
+	</select>
+	<delete id="deleteByIds" parameterType="int">
+		delete from t_app
+		<where>
+		<choose>
+			<when test="null != ids">
+				<foreach collection="ids" item="id" separator="," open="id in (" close=")">
+				#{id}
+				</foreach>
+			</when>
+			<otherwise>
+			0=1
+			</otherwise>
+		</choose>
+		</where>
+	</delete>
+	<update id="update" parameterType="tech.huit.uuc.entity.auth.App">
+		update t_app
+		<set>
+			<if test="name != null">
+				name = #{name},
+			</if>
+			<if test="authorizeSipCount != null">
+				authorize_sip_count = #{authorizeSipCount},
+			</if>
+			<if test="authorizeCallCount != null">
+				authorize_call_count = #{authorizeCallCount},
+			</if>
+			<if test="expiryDate != null">
+				expiry_date = #{expiryDate},
+			</if>
+			<if test="rsaPubKey != null">
+				rsa_pub_key = #{rsaPubKey},
+			</if>
+			<if test="rsaPrivateKey != null">
+				rsa_private_key = #{rsaPrivateKey},
+			</if>
+			<if test="imCallbackUrl != null">
+				imCallbackUrl = #{imCallbackUrl},
+			</if>
+			<if test="aesKey != null">
+				aes_key = #{aesKey}
+			</if>
+		</set>
+		where id=#{id}
+	</update>
+	<select id="listPaged" resultType="tech.huit.uuc.entity.auth.App">
+		select * from t_app
+		<if test="tableParam.length > -1">
+		limit #{tableParam.start},#{tableParam.length}
+		</if>
+	</select>
+	<select id="listAll" resultType="tech.huit.uuc.entity.auth.App">
+		select * from t_app
+	</select>
+	<select id="count" resultType="int">
+		select count(*) from t_app
+	</select>
+</mapper>
